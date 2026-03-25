@@ -3,49 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-// ── Fallback mock data (shown when DB returns nothing) ──────────────────────
-const MOCK_TOMBSTONES = [
-  {
-    _id: "g1",
-    code: "SY-AT-701",
-    name: "LuminaOS",
-    description: "A distributed operating system for remote instrumented environments.",
-    finalPulse: 64,
-    stack: ["Rust", "Assembly"],
-    mortem: "Nov 16, 7855",
-    abandonedAt: null,
-  },
-  {
-    _id: "g2",
-    code: "SY-75-321",
-    name: "Project Aether",
-    description: "Real-time mesh networking protocol for satellite autonomous systems.",
-    finalPulse: 12,
-    stack: ["C++", "UX"],
-    mortem: "May 12, 8813",
-    abandonedAt: null,
-  },
-  {
-    _id: "g3",
-    code: "SY-AT-448",
-    name: "Sentient-JS",
-    description: "A framework that predicts the next line of code from developer bias.",
-    finalPulse: 88,
-    stack: ["TypeScript", "TensorFlow"],
-    mortem: "Feb 22, 9021",
-    abandonedAt: null,
-  },
-  {
-    _id: "g4",
-    code: "SY-BF-396",
-    name: "Vault-Key",
-    description: "Physical hardware security key built on non-volatile shuttle memory.",
-    finalPulse: 45,
-    stack: ["Solidity", "Hardware"],
-    mortem: "Jul 04, 7810",
-    abandonedAt: null,
-  },
-];
+
 
 // ── Types ───────────────────────────────────────────────────────────────────
 interface Tombstone {
@@ -97,21 +55,14 @@ export default function GraveyardPage() {
 
   useEffect(() => {
     setLoading(true);
-    // Fetch all abandoned projects (no userId filter — community graveyard)
+    // Fetch all abandoned projects
     fetch("/api/projects?status=abandoned")
       .then((r) => r.json())
       .then((data: Tombstone[]) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setTombstones(data);
-          setUsingMock(false);
-        } else {
-          setTombstones(MOCK_TOMBSTONES as Tombstone[]);
-          setUsingMock(true);
-        }
+        setTombstones(Array.isArray(data) ? data : []);
       })
       .catch(() => {
-        setTombstones(MOCK_TOMBSTONES as Tombstone[]);
-        setUsingMock(true);
+        setTombstones([]);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -136,11 +87,6 @@ export default function GraveyardPage() {
         <p className="text-[#8a8a9a] text-sm max-w-lg leading-relaxed">
           The lessons learned in the shadows of abandoned repositories are the foundation of your next masterpiece.
         </p>
-        {usingMock && (
-          <p className="text-[#e05a5a]/60 text-[9px] tracking-[0.12em] uppercase mt-2" style={{ fontFamily: "var(--font-cinzel)" }}>
-            ◈ Preview data — retire a project to populate the graveyard
-          </p>
-        )}
       </div>
 
       {/* ── Loading skeleton ── */}

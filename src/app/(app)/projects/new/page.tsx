@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const AVAILABLE_STACKS = [
   "Next.js", "React", "Node.js", "Python", "Rust", "Go", "TypeScript",
@@ -228,12 +230,24 @@ export default function NewProjectPage() {
               <label className="text-[#c9a84c] text-[10px] tracking-[0.2em] uppercase block mb-1.5" style={{ fontFamily: "var(--font-cinzel)" }}>
                 Projected Launch Date
               </label>
-              <input
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="w-full bg-transparent border-b border-[#c9a84c]/30 focus:border-[#c9a84c]/70 outline-none py-2.5 text-[#f0ead6] text-sm tracking-wider transition-colors [color-scheme:dark]"
-              />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-10 pl-1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="1.5" className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+                <DatePicker
+                  selected={deadline ? new Date(deadline) : null}
+                  onChange={(date: Date | null) => setDeadline(date ? date.toISOString() : "")}
+                  dateFormat="yyyy-MM-dd"
+                  placeholderText="Click to select launch date"
+                  className="w-full bg-transparent border-b border-[#c9a84c]/30 focus:border-[#c9a84c]/70 outline-none py-2.5 pl-7 text-[#f0ead6] text-sm tracking-wider transition-colors cursor-pointer"
+                  popperPlacement="bottom-start"
+                />
+              </div>
             </div>
 
             {/* Visibility */}

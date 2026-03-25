@@ -15,10 +15,13 @@ export default function AppLayout({
       {/* Main content area — offset by sidebar width on lg */}
       <div className="flex-1 flex flex-col lg:ml-[200px] min-h-screen">
         <Header />
-        <main className="flex-1 px-4 sm:px-6 py-6 pb-24 lg:pb-6 overflow-y-auto">
+        <main className="flex-1 px-4 sm:px-6 py-6">
           {children}
         </main>
-        <Footer />
+        {/* Footer wrapper pushes the bottom up to prevent the mobile tab bar from covering it */}
+        <div className="pb-20 lg:pb-0">
+          <Footer />
+        </div>
       </div>
     </div>
   );

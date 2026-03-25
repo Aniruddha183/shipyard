@@ -146,8 +146,9 @@ export default function Header() {
                         {sessionUser.totalPoints?.toLocaleString() || 0} PTS
                       </span>
                       {sessionUser.streak > 0 && (
-                        <span className="text-[#5ae0a0] text-[9px] tracking-wider">
-                          🔥 {sessionUser.streak} day streak
+                        <span className="text-[#5ae0a0] text-[9px] tracking-wider flex items-center gap-1">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-2.5 h-2.5"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 2.4 5.6a8.3 8.3 0 11-14.3-6.4c1.5 1.5 3 2.5 3 4.5 0 .5.3 1 1.4 1.3z" /></svg>
+                          {sessionUser.streak} day streak
                         </span>
                       )}
                     </div>

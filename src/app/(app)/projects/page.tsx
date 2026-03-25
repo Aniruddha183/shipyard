@@ -4,49 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
-// ── Fallback mock data (shown when DB is empty or user is not logged in) ────
-const MOCK_PROJECTS = [
-  {
-    _id: "mock-1",
-    name: "Project Aegis",
-    description: "Real-time encryption layer for distributed communication systems.",
-    stack: ["Rust", "K8S", "gRPC"],
-    status: "active",
-    tasks: [
-      { _id: "t1", status: "done", priority: "high" },
-      { _id: "t2", status: "done", priority: "medium" },
-      { _id: "t3", status: "inprogress", priority: "critical" },
-      { _id: "t4", status: "todo", priority: "low" },
-    ],
-    deadline: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString(),
-    completionPercent: 50,
-  },
-  {
-    _id: "mock-2",
-    name: "Neon Scribe",
-    description: "Minimalist markdown editor with generative focus modes.",
-    stack: ["Next.js", "Tailwind", "TipTap"],
-    status: "paused",
-    tasks: [
-      { _id: "t5", status: "done", priority: "medium" },
-      { _id: "t6", status: "todo", priority: "high" },
-    ],
-    completionPercent: 50,
-  },
-  {
-    _id: "mock-3",
-    name: "Chrono-Sync V2",
-    description: "Precision timing mechanism for sub-millisecond database reconciliation.",
-    stack: ["Elixir", "PostgreSQL"],
-    status: "reviewing",
-    tasks: [
-      { _id: "t7", status: "done", priority: "medium" },
-      { _id: "t8", status: "done", priority: "low" },
-      { _id: "t9", status: "inprogress", priority: "high" },
-    ],
-    completionPercent: 67,
-  },
-];
+
 
 // ── Types ───────────────────────────────────────────────────────────────────
 interface Task { _id: string; status: string; priority?: string; }
@@ -115,11 +73,7 @@ export default function ProjectsPage() {
     if (sessionStatus === "loading") return;
 
     if (sessionStatus === "unauthenticated" || !userId) {
-      const filtered = statusFilter === "All"
-        ? MOCK_PROJECTS
-        : MOCK_PROJECTS.filter(p => p.status === statusFilter);
-      setProjects(filtered as Project[]);
-      setUsingMock(true);
+      setProjects([]);
       setLoading(false);
       return;
     }
@@ -131,20 +85,10 @@ export default function ProjectsPage() {
     fetch(`/api/projects?${params}`)
       .then(r => r.json())
       .then((data: Project[]) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setProjects(data);
-          setUsingMock(false);
-        } else {
-          const filtered = statusFilter === "All"
-            ? MOCK_PROJECTS
-            : MOCK_PROJECTS.filter(p => p.status === statusFilter);
-          setProjects(filtered as Project[]);
-          setUsingMock(true);
-        }
+        setProjects(Array.isArray(data) ? data : []);
       })
       .catch(() => {
-        setProjects(MOCK_PROJECTS as Project[]);
-        setUsingMock(true);
+        setProjects([]);
       })
       .finally(() => setLoading(false));
   }, [sessionStatus, userId, statusFilter, sort]);
@@ -175,16 +119,7 @@ export default function ProjectsPage() {
                 ? "Sign in to see your real fleet."
                 : `${projects.length} project${projects.length !== 1 ? "s" : ""} in your workspace.`}
           </p>
-          {usingMock && !loading && (
-            <p
-              className="text-[#c9a84c]/60 text-[9px] tracking-[0.12em] uppercase mt-1"
-              style={{ fontFamily: "var(--font-cinzel)" }}
-            >
-              ◈ Preview data — visit{" "}
-              <a href="/api/seed" className="underline hover:text-[#c9a84c]">/api/seed</a>{" "}
-              to populate your shipyard
-            </p>
-          )}
+          {/* We do not need the usingMock banner anymore */}
         </div>
         <div className="flex gap-8 text-right">
           <div>
@@ -257,19 +192,30 @@ export default function ProjectsPage() {
       )}
 
       {/* ── Empty state ── */}
-      {!loading && !usingMock && projects.length === 0 && (
-        <div className="border border-dashed border-[#c9a84c]/15 p-12 text-center">
-          <p className="text-[#8a8a9a] text-sm italic mb-4" style={{ fontFamily: "var(--font-cormorant)" }}>
-            {statusFilter === "All"
-              ? "No projects yet. Create your first project to get started."
-              : `No ${statusFilter} projects found.`}
+      {!loading && projects.length === 0 && (
+        <div className="border border-dashed border-[#c9a84c]/15 py-24 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 mb-6 opacity-20">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+              <path d="M11 5l-5 8h5V5z" strokeWidth="1.5" />
+              <path d="M13 5v8h5.5C18.5 9 16 6.5 13 5z" strokeWidth="1.5" />
+              <path d="M3.5 14.5h17l-1.5 2c-1.5 1-3.5 1-5 0s-3.5-1-5 0-3.5 1-5 0L3.5 14.5z" fill="currentColor" stroke="none" />
+              <path d="M3.5 19.5c1.5 1 3.5 1 5 0s3.5-1 5 0 3.5 1 5 0" strokeWidth="1.5" />
+            </svg>
+          </div>
+          <h2 className="text-[#f0ead6] text-3xl font-light mb-3" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic" }}>
+            {statusFilter === "All" ? "The Atelier is Empty" : `No ${statusFilter} projects.`}
+          </h2>
+          <p className="text-[#8a8a9a]/70 text-xs sm:text-sm max-w-md px-4 leading-relaxed mb-8">
+            {statusFilter === "All" 
+              ? "Every great legacy begins with a single design. Your manifesting table awaits its first grand endeavor."
+              : "No projects match the current filter. Try selecting 'All' or start a new commission."}
           </p>
           <Link
             href="/projects/new"
-            className="text-[#c9a84c] text-[10px] tracking-[0.15em] uppercase border border-[#c9a84c]/30 px-6 py-2.5 hover:bg-[#c9a84c]/8 transition-all"
-            style={{ fontFamily: "var(--font-cinzel)" }}
+            className="flex items-center gap-2 border border-[#c9a84c]/40 text-[#c9a84c] text-[10px] tracking-[0.18em] uppercase py-3 px-8 hover:bg-[#c9a84c]/8 hover:border-[#c9a84c]/80 transition-all"
+            style={{ fontFamily: "var(--font-cinzel)", fontWeight: "600" }}
           >
-            Declare a Build →
+            Create One
           </Link>
         </div>
       )}
@@ -277,7 +223,7 @@ export default function ProjectsPage() {
       {/* ── Featured (first) Project ── */}
       {!loading && featured && (
         <Link
-          href={usingMock ? "/projects/new" : `/projects/${featured._id}`}
+          href={`/projects/${featured._id}`}
           className="block border border-[#c9a84c]/15 bg-[#0e1018] p-6 hover:border-[#c9a84c]/35 transition-all group"
         >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
@@ -348,7 +294,7 @@ export default function ProjectsPage() {
             return (
               <Link
                 key={p._id}
-                href={usingMock ? "/projects/new" : `/projects/${p._id}`}
+                href={`/projects/${p._id}`}
                 className="border border-[#c9a84c]/12 bg-[#0e1018] p-5 hover:border-[#c9a84c]/30 transition-all group flex flex-col"
               >
                 <div className="flex items-start justify-between mb-3">

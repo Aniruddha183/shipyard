@@ -3,45 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-// ── Fallback mock data (shown when DB returns nothing) ──────────────────────
-const MOCK_COMMUNITY_PROJECTS = [
-  {
-    _id: "c1",
-    name: "Aurelius Engine",
-    description: "A high-performance asynchronous runtime for distributed ship-to-shore communications.",
-    status: "shipped",
-    stack: ["Rust", "gRPC", "K8S"],
-    userId: "@artisan_null",
-    featured: true,
-    stars: "1.2k",
-    forks: "84",
-  },
-  {
-    _id: "c2",
-    name: "The Icarus Protocol",
-    description: "Decentralized flight path optimization for high-altitude drones.",
-    status: "active",
-    stack: ["Go", "WebAssembly"],
-    userId: "@sky_forge",
-    featured: false,
-  },
-  {
-    _id: "c3",
-    name: "Chrono-Sync V2",
-    description: "Precision timing mechanism for sub-millisecond database reconciliation.",
-    status: "reviewing",
-    stack: ["Elixir", "PostgreSQL"],
-    userId: "@time_weaver",
-    featured: false,
-  },
-];
 
-const MOCK_LEADERBOARD = [
-  { rank: "01", name: "Captain Cipher", streak: 42, projects: 12, points: "9,482" },
-  { rank: "02", name: "M. Kovacs",      streak: 31, projects: 8,  points: "8,128" },
-  { rank: "03", name: "S. Vancity",     streak: 19, projects: 24, points: "7,944" },
-  { rank: "04", name: "L. Weaver",      streak: 14, projects: 5,  points: "6,201" },
-];
 
 // ── Types ───────────────────────────────────────────────────────────────────
 interface CommunityProject {
@@ -93,9 +55,8 @@ function statusBadgeClass(status: string) {
 export default function CommunityPage() {
   const [tab, setTab] = useState("Recent");
   const [projects, setProjects] = useState<CommunityProject[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderEntry[]>(MOCK_LEADERBOARD);
+  const [leaderboard, setLeaderboard] = useState<LeaderEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [usingMock, setUsingMock] = useState(false);
 
   // Fetch public projects from DB
   useEffect(() => {
@@ -104,19 +65,14 @@ export default function CommunityPage() {
       .then((r) => r.json())
       .then((data: CommunityProject[]) => {
         if (Array.isArray(data) && data.length > 0) {
-          // Mark first as featured
           const enriched = data.map((p, i) => ({ ...p, featured: i === 0 }));
           setProjects(enriched);
-          setUsingMock(false);
         } else {
-          // Fallback to mock data
-          setProjects(MOCK_COMMUNITY_PROJECTS as CommunityProject[]);
-          setUsingMock(true);
+          setProjects([]);
         }
       })
       .catch(() => {
-        setProjects(MOCK_COMMUNITY_PROJECTS as CommunityProject[]);
-        setUsingMock(true);
+        setProjects([]);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -162,11 +118,6 @@ export default function CommunityPage() {
           <p className="text-[#8a8a9a] text-sm mt-3 max-w-lg leading-relaxed">
             Behold the projects of our guild. From the simplest utility to the grandest system, every line of code is a plank in our shared legacy.
           </p>
-          {usingMock && (
-            <p className="text-[#c9a84c]/60 text-[9px] tracking-[0.12em] uppercase mt-2" style={{ fontFamily: "var(--font-cinzel)" }}>
-              ◈ Preview data — seed the DB or ship a public project
-            </p>
-          )}
         </div>
         <div className="flex gap-8 text-center">
           <div>
@@ -256,13 +207,14 @@ export default function CommunityPage() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 text-[#8a8a9a] text-xs">
-                  <span className="flex items-center gap-1">
-                    👤 {typeof featured.userId === "string" && featured.userId.startsWith("@")
+                  <span className="flex items-center gap-1.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3 text-[#8a8a9a]"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    {typeof featured.userId === "string" && featured.userId.startsWith("@")
                       ? featured.userId
                       : `Builder`}
                   </span>
-                  {featured.stars && <span className="flex items-center gap-1">⭐ {featured.stars}</span>}
-                  {featured.forks && <span className="flex items-center gap-1">🔱 {featured.forks}</span>}
+                  {featured.stars && <span className="flex items-center gap-1.5"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" className="w-3 h-3 text-[#c9a84c]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>{featured.stars}</span>}
+                  {featured.forks && <span className="flex items-center gap-1.5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3 text-[#5ae0a0]"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"/><path d="M12 12v3"/></svg>{featured.forks}</span>}
                 </div>
                 <Link
                   href={`/projects/${featured._id}`}
@@ -302,11 +254,17 @@ export default function CommunityPage() {
 
           {/* Empty state */}
           {!loading && projects.length === 0 && (
-            <div className="border border-dashed border-[#c9a84c]/15 p-12 text-center">
-              <p className="text-[#8a8a9a] text-sm italic" style={{ fontFamily: "var(--font-cormorant)" }}>
-                No public projects in the showcase yet. Ship your first build to join the guild.
-              </p>
-            </div>
+             <div className="border border-dashed border-[#c9a84c]/15 py-24 flex flex-col items-center justify-center text-center">
+               <div className="w-12 h-12 mb-6 opacity-20">
+                 <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+                   <path d="M12 22s-8-4.5-8-11.8A2 2 0 0 1 6 8.2c1.5 0 2.5 1.5 2.5 1.5l1.5 3 2-4.5h4c1 0 2 .5 2 1.5S18 12 18 12s-1-2-1.5-2C15 10 14 12 14 12l-2-3-2.5 4L8 10c0-1.5 1.5-2 1.5-2" />
+                   <path d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 3 7.3" />
+                   <path d="M22 12a10 10 0 0 0-4-8.5" />
+                 </svg>
+               </div>
+               <p className="text-[#f0ead6] text-2xl italic mb-2" style={{ fontFamily: "var(--font-cormorant)" }}>The showcase is empty.</p>
+               <p className="text-[#8a8a9a]/60 text-xs tracking-widest uppercase mb-1" style={{ fontFamily: "var(--font-cinzel)" }}>No public projects are currently visible. Be the first to build the legacy.</p>
+             </div>
           )}
         </div>
 
@@ -330,23 +288,27 @@ export default function CommunityPage() {
             </div>
 
             <div className="space-y-4 mt-4">
-              {leaderboard.map((u) => (
-                <div key={u.rank} className="flex items-center gap-3">
-                  <span className="text-[#c9a84c]/60 text-lg font-mono w-6">{u.rank}</span>
-                  <div className="w-8 h-8 rounded-full bg-[#1a1c28] border border-[#c9a84c]/20 flex items-center justify-center text-[10px] text-[#8a8a9a]">
-                    {u.name.charAt(0)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[#f0ead6] text-xs font-medium">{u.name}</p>
-                      <span className="text-[#c9a84c] text-[10px]">🔥 {u.streak}</span>
+              {leaderboard.length === 0 ? (
+                <div className="py-6 text-center text-[#8a8a9a] text-xs">No ranking data yet.</div>
+              ) : (
+                leaderboard.map((u) => (
+                  <div key={u.rank} className="flex items-center gap-3">
+                    <span className="text-[#c9a84c]/60 text-lg font-mono w-6">{u.rank}</span>
+                    <div className="w-8 h-8 rounded-full bg-[#1a1c28] border border-[#c9a84c]/20 flex items-center justify-center text-[10px] text-[#8a8a9a]">
+                      {u.name.charAt(0)}
                     </div>
-                    <p className="text-[#8a8a9a] text-[9px] tracking-wider uppercase">
-                      {u.projects} Projects · {u.points} Tasks Done
-                    </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[#f0ead6] text-xs font-medium">{u.name}</p>
+                        {u.streak > 0 && <span className="text-[#c9a84c] text-[10px] flex items-center gap-0.5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 2.4 5.6a8.3 8.3 0 11-14.3-6.4c1.5 1.5 3 2.5 3 4.5 0 .5.3 1 1.4 1.3z" /></svg>{u.streak}</span>}
+                      </div>
+                      <p className="text-[#8a8a9a] text-[9px] tracking-wider uppercase">
+                        {u.projects} Projects · {u.points} Tasks Done
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             <Link

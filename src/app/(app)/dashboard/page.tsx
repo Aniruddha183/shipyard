@@ -11,17 +11,7 @@ interface Project {
 }
 interface LeaderboardUser { _id: string; username: string; avatar: string; streak: number; totalPoints: number; rank: number; }
 
-/* ── Fallback mock data shown when DB has no records ── */
-const MOCK_PROJECTS: Project[] = [
-  { _id: "mock1", name: "Project Aegis", description: "Real-time encryption layer for distributed communication systems.", stack: ["Rust", "K8S", "gRPC"], status: "active", tasks: [{ _id: "t1", title: "Implement OAuth2 Flow", status: "todo" }, { _id: "t2", title: "Refactor API middleware", status: "done" }, { _id: "t3", title: "Setup K8S Cluster", status: "inprogress" }, { _id: "t4", title: "Define gRPC Proto files", status: "done" }], completionPercent: 50 },
-  { _id: "mock2", name: "Neon Scribe", description: "Minimalist markdown editor with generative focus modes.", stack: ["Next.js", "Tailwind"], status: "paused", tasks: [{ _id: "t5", title: "Fix editor flickering", status: "todo" }, { _id: "t6", title: "Implement dark mode", status: "done" }], completionPercent: 50 },
-  { _id: "mock3", name: "Voltaic Core", description: "Neural network training harness for LLM hyperparameter search.", stack: ["Python", "CUDA"], status: "planning", tasks: [{ _id: "t7", title: "Setup environment", status: "todo" }, { _id: "t8", title: "Define architecture", status: "todo" }, { _id: "t9", title: "Initial research", status: "done" }], completionPercent: 33 },
-];
-const MOCK_LEADERBOARD: LeaderboardUser[] = [
-  { _id: "l1", username: "V. Kaelen", avatar: "", streak: 12, totalPoints: 24, rank: 1 },
-  { _id: "l2", username: "S. Thorne", avatar: "", streak: 8, totalPoints: 18, rank: 2 },
-  { _id: "l3", username: "Captain Cipher", avatar: "", streak: 42, totalPoints: 15, rank: 3 },
-];
+
 
 function statusColor(s: string) {
   switch (s) {
@@ -58,10 +48,10 @@ export default function DashboardPage() {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [graveyardOpen, setGraveyardOpen] = useState(false);
 
-  /* --- Fetch live projects (fall back to mock if empty) --- */
+  /* --- Fetch live projects --- */
   useEffect(() => {
     if (!userId) {
-      setProjects(MOCK_PROJECTS);
+      setProjects([]);
       setLoadingProjects(false);
       return;
     }
@@ -69,22 +59,20 @@ export default function DashboardPage() {
     fetch(`/api/projects?userId=${userId}`)
       .then(r => r.json())
       .then(data => {
-        const list = Array.isArray(data) ? data : [];
-        setProjects(list.length > 0 ? list : MOCK_PROJECTS);
+        setProjects(Array.isArray(data) ? data : []);
       })
-      .catch(() => setProjects(MOCK_PROJECTS))
+      .catch(() => setProjects([]))
       .finally(() => setLoadingProjects(false));
   }, [userId]);
 
-  /* --- Fetch leaderboard (fall back to mock if empty) --- */
+  /* --- Fetch leaderboard --- */
   useEffect(() => {
     fetch("/api/leaderboard")
       .then(r => r.json())
       .then(data => {
-        const list = Array.isArray(data) ? data : [];
-        setLeaderboard(list.length > 0 ? list : MOCK_LEADERBOARD);
+        setLeaderboard(Array.isArray(data) ? data : []);
       })
-      .catch(() => setLeaderboard(MOCK_LEADERBOARD));
+      .catch(() => setLeaderboard([]));
   }, []);
 
   /* --- Computed stats --- */
@@ -143,15 +131,15 @@ export default function DashboardPage() {
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Active Projects", value: activeProjects.length.toString().padStart(2, "0"), sub: `${abandonedCount} in the Graveyard`, icon: "📦" },
-          { label: "Completion Rate", value: `${completionRate}%`, ring: true, ringVal: completionRate, icon: "📊" },
-          { label: "Tasks Remaining", value: pendingTasks.length.toString().padStart(2, "0"), sub: `${totalTasks} total tasks`, icon: "📋" },
-          { label: "Points", value: (sessionUser?.totalPoints ?? totalCompletedTasks).toString(), sub: `${totalCompletedTasks} tasks completed`, icon: "⭐" },
+          { label: "Active Projects", value: activeProjects.length.toString().padStart(2, "0"), sub: `${abandonedCount} in the Graveyard`, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 opacity-60"><path d="M12 2l10 5-10 5L2 7l10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg> },
+          { label: "Completion Rate", value: `${completionRate}%`, ring: true, ringVal: completionRate, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 opacity-60"><path d="M12 20V10M18 20V4M6 20v-4" /></svg> },
+          { label: "Tasks Remaining", value: pendingTasks.length.toString().padStart(2, "0"), sub: `${totalTasks} total tasks`, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 opacity-60"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> },
+          { label: "Points", value: (sessionUser?.totalPoints ?? totalCompletedTasks).toString(), sub: `${totalCompletedTasks} tasks completed`, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 opacity-60"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg> },
         ].map((s) => (
           <div key={s.label} className="border border-[#c9a84c]/12 bg-[#0e1018] px-5 py-4 hover:border-[#c9a84c]/25 transition-all">
             <div className="flex items-center justify-between mb-2">
               <p className="text-[#8a8a9a] text-[9px] tracking-[0.18em] uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>{s.label}</p>
-              <span className="text-sm opacity-60">{s.icon}</span>
+              <span className="text-[#c9a84c]">{s.icon}</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-[#f0ead6] text-2xl font-mono">{s.value}</span>
@@ -184,10 +172,19 @@ export default function DashboardPage() {
               {[1, 2, 3].map(i => <div key={i} className="border border-[#c9a84c]/8 bg-[#0e1018] p-4 h-36 animate-pulse" />)}
             </div>
           ) : activeProjects.length === 0 ? (
-            <div className="border border-dashed border-[#c9a84c]/15 p-8 text-center">
-              <p className="text-[#8a8a9a] text-sm italic" style={{ fontFamily: "var(--font-cormorant)" }}>No projects created yet.</p>
-              <Link href="/projects/new" className="text-[#c9a84c] text-[10px] tracking-[0.12em] uppercase mt-3 inline-block hover:text-[#e8c96a] transition-colors" style={{ fontFamily: "var(--font-cinzel)" }}>
-                Create Your First Project →
+            <div className="border border-dashed border-[#c9a84c]/15 p-12 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 mb-4 opacity-20">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full">
+                  <path d="M11 5l-5 8h5V5z" strokeWidth="1.5" />
+                  <path d="M13 5v8h5.5C18.5 9 16 6.5 13 5z" strokeWidth="1.5" />
+                  <path d="M3.5 14.5h17l-1.5 2c-1.5 1-3.5 1-5 0s-3.5-1-5 0-3.5 1-5 0L3.5 14.5z" fill="currentColor" stroke="none" />
+                  <path d="M3.5 19.5c1.5 1 3.5 1 5 0s3.5-1 5 0 3.5 1 5 0" strokeWidth="1.5" />
+                </svg>
+              </div>
+              <p className="text-[#8a8a9a] text-base italic" style={{ fontFamily: "var(--font-cormorant)" }}>The shipyard stands empty.</p>
+              <p className="text-[#8a8a9a]/60 text-[10px] mt-1 max-w-xs uppercase tracking-wider">Every master architect starts with a single blueprint.</p>
+              <Link href="/projects/new" className="text-[#c9a84c] text-[10px] tracking-[0.15em] uppercase mt-6 border border-[#c9a84c]/30 px-6 py-2.5 hover:bg-[#c9a84c]/10 transition-colors" style={{ fontFamily: "var(--font-cinzel)" }}>
+                Create One
               </Link>
             </div>
           ) : (
@@ -225,7 +222,7 @@ export default function DashboardPage() {
                       </div>
                       <p className="text-[8px] text-[#8a8a9a] mt-0.5">{p.tasks.filter(t => t.status === 'done').length}/{p.tasks.length} tasks</p>
                     </div>
-                    {dl && <p className="text-[8px] text-[#8a8a9a] tracking-widest uppercase mt-1">⏱ {dl}</p>}
+                    {dl && <p className="text-[8px] text-[#8a8a9a] tracking-widest uppercase mt-1 flex items-center gap-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-2.5 h-2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l3 3"/></svg>{dl}</p>}
                   </Link>
                 );
               })}
@@ -278,7 +275,7 @@ export default function DashboardPage() {
         <h2 className="text-[#f0ead6] text-xl font-light mb-4" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic" }}>Pending Tasks</h2>
         {pendingTasks.length === 0 ? (
           <div className="border border-[#c9a84c]/8 bg-[#0e1018] p-4 text-center">
-            <p className="text-[#5ae0a0] text-sm italic" style={{ fontFamily: "var(--font-cormorant)" }}>All tasks complete. Smooth sailing! 🎉</p>
+            <p className="text-[#5ae0a0] text-sm italic" style={{ fontFamily: "var(--font-cormorant)" }}>All tasks complete. Smooth sailing!</p>
           </div>
         ) : (
           <div className="space-y-1">

@@ -102,9 +102,8 @@ export default function SignInPage() {
               </button>
             </form>
 
-            <div className="flex items-center justify-between mt-6 text-[9px] sm:text-[10px] tracking-[0.15em] uppercase">
-              <Link href="/" className="text-[#c9a84c]/40 hover:text-[#c9a84c]/75 transition-colors" style={{ fontFamily: "var(--font-cinzel)" }}>Request Access</Link>
-              <Link href="#" className="text-[#c9a84c]/40 hover:text-[#c9a84c]/75 transition-colors" style={{ fontFamily: "var(--font-cinzel)" }}>Lost Credentials?</Link>
+            <div className="flex items-center justify-center mt-6 text-[9px] sm:text-[10px] tracking-[0.15em] uppercase">
+              <Link href="/signup" className="text-[#c9a84c]/40 hover:text-[#c9a84c]/75 transition-colors" style={{ fontFamily: "var(--font-cinzel)" }}>Don't Have an account? Sign Up</Link>
             </div>
           </div>
           <div className="h-px w-full bg-gradient-to-r from-transparent via-[#c9a84c]/30 to-transparent" />

@@ -1,70 +1,73 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Cormorant_Garamond, Cinzel } from "next/font/google";
-import "./globals.css";
-import Providers from "@/components/Providers";
+  import type { Metadata } from "next";
+  import { Geist, Geist_Mono, Cormorant_Garamond, Cinzel } from "next/font/google";
+  import "./globals.css";
+  import Providers from "@/components/Providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+  const geistSans = Geist({
+    variable: "--font-geist-sans",
+    subsets: ["latin"],
+  });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  const geistMono = Geist_Mono({
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
+  });
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
-});
+  const cormorant = Cormorant_Garamond({
+    variable: "--font-cormorant",
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700"],
+    style: ["normal", "italic"],
+  });
 
-const cinzel = Cinzel({
-  variable: "--font-cinzel",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
+  const cinzel = Cinzel({
+    variable: "--font-cinzel",
+    subsets: ["latin"],
+    weight: ["400", "500", "600", "700"],
+  });
 
-export const metadata: Metadata = {
-  title: {
-    template: "%s | The Shipyard",
-    default: "The Shipyard — Forge Your Legacy",
-  },
-  description: "Join the most prestigious assembly of master builders. A platform to track, manage, and build your digital projects with precision and prestige.",
-  keywords: ["developer", "projects", "shipyard", "portfolio", "development", "productivity"],
-  authors: [{ name: "The Architect" }],
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://shipyard.io",
-    title: "The Shipyard - Forge Your Legacy",
-    description: "Join the most prestigious assembly of master builders.",
-    siteName: "The Shipyard",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "The Shipyard - Forge Your Legacy",
-    description: "Join the most prestigious assembly of master builders.",
-  },
-  icons: {
-    icon: "/icon.svg",
-  },
-};
+  export const metadata: Metadata = {
+    title: {
+      template: "%s | The Shipyard",
+      default: "The Shipyard — Forge Your Legacy",
+    },
+    description: "Join the most prestigious assembly of master builders. A platform to track, manage, and build your digital projects with precision and prestige.",
+    keywords: ["developer", "projects", "shipyard", "portfolio", "development", "productivity"],
+    authors: [{ name: "The Architect" }],
+    openGraph: {
+      type: "website",
+      locale: "en_US",
+      images: [{ url: '/api/og', width: 1200, height: 630 }],
+      url: "https://shipyard-io.vercel.app",
+      title: "The Shipyard - Forge Your Legacy",
+      description: "Join the most prestigious assembly of master builders.",
+      siteName: "The Shipyard",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "The Shipyard - Forge Your Legacy",
+      description: "Join the most prestigious assembly of master builders.",
+      images: ['/api/og'],
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${cinzel.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  );
-}
+    },
+    icons: {
+      icon: "/icon.svg",
+    },
+  };
+
+  export default function RootLayout({
+    children,
+  }: Readonly<{
+    children: React.ReactNode;
+  }>) {
+    return (
+      <html
+        lang="en"
+        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${cinzel.variable} h-full antialiased`}
+      >
+        <body className="min-h-full flex flex-col">
+          <Providers>{children}</Providers>
+        </body>
+      </html>
+    );
+  }

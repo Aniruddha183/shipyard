@@ -2,7 +2,7 @@
   import { Geist, Geist_Mono, Cormorant_Garamond, Cinzel } from "next/font/google";
   import "./globals.css";
   import Providers from "@/components/Providers";
-
+import { Analytics } from "@vercel/analytics/next"
   const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin"],
@@ -66,7 +66,9 @@
         className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${cinzel.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col">
-          <Providers>{children}</Providers>
+          <Providers>{children}
+          <Analytics />
+          </Providers>
         </body>
       </html>
     );

@@ -125,7 +125,7 @@ export default function SignUpPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[#c9a84c] text-[10px] tracking-[0.2em] uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>Email Address</label>
-              <input required value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="COMMAND@SHIPYARD.IO" className="w-full bg-transparent border-b border-[#c9a84c]/30 focus:border-[#c9a84c]/70 outline-none py-2 text-white placeholder:text-white/20 text-sm tracking-wider uppercase" />
+              <input required value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="COMMAND@GMAIL.COM" className="w-full bg-transparent border-b border-[#c9a84c]/30 focus:border-[#c9a84c]/70 outline-none py-2 text-white placeholder:text-white/20 text-sm tracking-wider uppercase" />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[#c9a84c] text-[10px] tracking-[0.2em] uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>Encryption Key</label>

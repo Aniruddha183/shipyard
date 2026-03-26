@@ -31,7 +31,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 h-14 bg-[#0a0b12]/90 backdrop-blur-md border-b border-[#c9a84c]/10 flex items-center justify-between px-6">
+    <header className="sticky top-0 z-30  py-3 bg-[#0a0b12]/90 backdrop-blur-md border-b border-[#c9a84c]/10 flex items-center justify-between px-6">
       {/* Left — Logo + nav */}
       <div className="flex items-center gap-6">
         {/* Mobile Logo */}

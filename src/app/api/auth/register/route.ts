@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       username: username.toLowerCase(),
       email: email.toLowerCase(),
       password: hashedPassword, // Temporary: model update coming
-      githubId: "none", // Distinction for non-OAuth users
+      githubId: `credentials-${new Date().getTime()}-${Math.random().toString(36).substring(2, 9)}`, // Bypass unique githubId constraint for non-OAuth users
       avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${username}`,
       streak: 0,
       totalPoints: 0,

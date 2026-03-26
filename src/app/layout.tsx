@@ -39,14 +39,14 @@
       locale: "en_US",
       images: [{ url: '/api/og', width: 1200, height: 630 }],
       url: "https://shipyard-io.vercel.app",
-      title: "The Shipyard - Forge Your Legacy",
-      description: "Join the most prestigious assembly of master builders.",
+      title: "ShipYard — The Developer Accountability Platform for Builders",  // 58 chars ✓
+      description: "Declare your project publicly, break it into tasks, track your daily streak, and ship — or bury it in the graveyard for all to see.",  // 133 chars ✓
       siteName: "The Shipyard",
     },
     twitter: {
       card: "summary_large_image",
-      title: "The Shipyard - Forge Your Legacy",
-      description: "Join the most prestigious assembly of master builders.",
+      title: "ShipYard — The Developer Accountability Platform for Builders",  // 58 chars ✓
+      description: "Declare your project publicly, break it into tasks, track your daily streak, and ship — or bury it in the graveyard for all to see.",  // 133 chars ✓
       images: ['/api/og'],
 
     },

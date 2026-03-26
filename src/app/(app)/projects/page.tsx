@@ -39,6 +39,7 @@ function statusBadge(s: string) {
     case "paused":    return "bg-[#4a1a1a] text-[#e05a5a]";
     case "planning":  return "bg-[#3a3520] text-[#c9a84c]";
     case "reviewing": return "bg-[#3a3520] text-[#c9a84c]";
+    case "abandoned": return "bg-[#6b1a2a]/20 text-[#e05a5a]";
     default:          return "bg-[#1a1c28] text-[#8a8a9a]";
   }
 }
@@ -233,7 +234,7 @@ export default function ProjectsPage() {
                   className={`text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 font-bold ${statusBadge(featured.status)}`}
                   style={{ fontFamily: "var(--font-cinzel)" }}
                 >
-                  {featured.status}
+                  {featured.status === "abandoned" ? "retired" : featured.status}
                 </span>
                 <span className="text-[#8a8a9a] text-[9px] tracking-[0.15em] uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>
                   {(featured.completionPercent ?? 0)}% Complete
@@ -298,8 +299,8 @@ export default function ProjectsPage() {
                 className="border border-[#c9a84c]/12 bg-[#0e1018] p-5 hover:border-[#c9a84c]/30 transition-all group flex flex-col"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <span className={`text-[8px] tracking-[0.12em] uppercase px-2 py-0.5 font-bold ${statusBadge(p.status)}`} style={{ fontFamily: "var(--font-cinzel)" }}>
-                    {p.status}
+                  <span className={`text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 font-bold ${statusBadge(p.status)}`} style={{ fontFamily: "var(--font-cinzel)" }}>
+                    {p.status === "abandoned" ? "retired" : p.status}
                   </span>
                   {dl && <span className={`text-[8px] tracking-wider uppercase ${dl.urgent ? "text-[#e05a5a]" : "text-[#8a8a9a]"}`}>⏱ {dl.text}</span>}
                 </div>

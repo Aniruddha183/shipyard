@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 
 
@@ -13,12 +14,14 @@ interface CommunityProject {
   status: string;
   stack: string[];
   userId: string;
+  username?: string;
   featured?: boolean;
   stars?: string;
   forks?: string;
 }
 
 interface LeaderEntry {
+  userid: any;
   rank: string;
   name: string;
   streak: number;
@@ -27,6 +30,7 @@ interface LeaderEntry {
 }
 
 interface LeaderUser {
+  id: any;
   _id: string;
   username: string;
   streak: number;
@@ -42,6 +46,7 @@ function statusLabel(status: string) {
     reviewing: "Reviewing",
     planning:  "Planning",
     paused:    "Paused",
+    abandoned: "Retired",
   };
   return map[status] ?? status;
 }
@@ -49,13 +54,19 @@ function statusLabel(status: string) {
 function statusBadgeClass(status: string) {
   if (status === "shipped") return "bg-[#1a4a35] text-[#5ae0a0]";
   if (status === "active")  return "bg-[#1a4a35] text-[#5ae0a0]";
+  if (status === "abandoned") return "bg-[#6b1a2a]/20 text-[#e05a5a]";
   return "bg-[#c9a84c]/15 text-[#c9a84c]";
 }
 
 export default function CommunityPage() {
+  const { data: session } = useSession();
+  const sessionUser = session?.user as any;
+  const sessionUserId = sessionUser?.id;
   const [tab, setTab] = useState("Recent");
   const [projects, setProjects] = useState<CommunityProject[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderEntry[]>([]);
+  const [fullLeaderboard, setFullLeaderboard] = useState<LeaderEntry[]>([]);
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Fetch public projects from DB
@@ -65,8 +76,7 @@ export default function CommunityPage() {
       .then((r) => r.json())
       .then((data: CommunityProject[]) => {
         if (Array.isArray(data) && data.length > 0) {
-          const enriched = data.map((p, i) => ({ ...p, featured: i === 0 }));
-          setProjects(enriched);
+          setProjects(data);
         } else {
           setProjects([]);
         }
@@ -79,28 +89,38 @@ export default function CommunityPage() {
 
   // Fetch leaderboard from DB
   useEffect(() => {
-    fetch("/api/leaderboard?limit=4")
+    fetch("/api/leaderboard?limit=50")
       .then((r) => r.json())
       .then((data: LeaderUser[]) => {
         if (Array.isArray(data) && data.length > 0) {
           const mapped: LeaderEntry[] = data.map((u, i) => ({
             rank:     String(i + 1).padStart(2, "0"),
             name:     u.username,
+            userid:   u._id,
             streak:   u.streak ?? 0,
             projects: u.projectCount ?? 0,
             points:   u.totalPoints?.toLocaleString() ?? "0",
           }));
-          setLeaderboard(mapped);
+          setFullLeaderboard(mapped);
+          setLeaderboard(mapped.slice(0, 4));
         }
-        // else keep mock leaderboard
       })
-      .catch(() => {
-        // keep mock leaderboard
-      });
+      .catch(() => {});
   }, []);
 
-  const featured    = projects.find((p) => p.featured);
-  const nonFeatured = projects.filter((p) => !p.featured);
+  const getSortedProjects = () => {
+    let sorted = [...projects];
+    if (tab === "Prominent") {
+      sorted = sorted.sort((a, b) => (b.stack?.length || 0) - (a.stack?.length || 0));
+    } else if (tab === "Legendary") {
+      sorted = sorted.filter(p => p.status === "shipped");
+    }
+    return sorted.map((p, i) => ({ ...p, featured: i === 0 }));
+  };
+
+  const displayedProjects = getSortedProjects();
+  const featured    = displayedProjects.find((p) => p.featured);
+  const nonFeatured = displayedProjects.filter((p) => !p.featured);
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-8">
@@ -130,7 +150,7 @@ export default function CommunityPage() {
           </div>
           <div>
             <p className="text-[#c9a84c] text-3xl font-mono">
-              {loading ? "…" : leaderboard.length}
+              {loading ? "…" : fullLeaderboard.length}
             </p>
             <p className="text-[#8a8a9a] text-[9px] tracking-[0.15em] uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>
               Master Builders
@@ -206,23 +226,19 @@ export default function CommunityPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 text-[#8a8a9a] text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3 text-[#8a8a9a]"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                    {typeof featured.userId === "string" && featured.userId.startsWith("@")
-                      ? featured.userId
-                      : `Builder`}
-                  </span>
-                  {featured.stars && <span className="flex items-center gap-1.5"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" className="w-3 h-3 text-[#c9a84c]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>{featured.stars}</span>}
-                  {featured.forks && <span className="flex items-center gap-1.5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3 text-[#5ae0a0]"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9"/><path d="M12 12v3"/></svg>{featured.forks}</span>}
-                </div>
-                <Link
-                  href={`/projects/${featured._id}`}
-                  className="text-[#c9a84c] text-[10px] tracking-[0.12em] uppercase hover:text-[#e8c96a] transition-colors"
-                  style={{ fontFamily: "var(--font-cinzel)" }}
-                >
-                  Inspect Blueprint →
+                <Link href={`/builder/${featured.userId}`} className="flex items-center gap-1.5 text-[#8a8a9a] hover:text-[#c9a84c] transition-colors text-[10px] tracking-widest uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-[#c9a84c] flex-shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                  <span className="truncate max-w-[120px]">{featured.username || "Builder"}</span>
                 </Link>
+                {sessionUserId && featured.userId === sessionUserId ? (
+                  <Link href={`/projects/${featured._id}`} className="text-[#c9a84c] text-[10px] tracking-[0.12em] uppercase hover:text-[#e8c96a] transition-colors flex-shrink-0" style={{ fontFamily: "var(--font-cinzel)" }}>
+                    Inspect Blueprint →
+                  </Link>
+                ) : (
+                  <span className="text-[#8a8a9a]/30 text-[10px] tracking-[0.12em] uppercase cursor-not-allowed flex-shrink-0" style={{ fontFamily: "var(--font-cinzel)" }} title="Only accessible to the project owner">
+                    Restricted
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -240,12 +256,27 @@ export default function CommunityPage() {
                   </span>
                   <h3 className="text-[#f0ead6] text-sm font-medium mb-1">{p.name}</h3>
                   <p className="text-[#8a8a9a] text-xs mb-3">{p.description}</p>
-                  <div className="flex gap-1.5 flex-wrap">
+                  <div className="flex gap-1.5 flex-wrap mb-4">
                     {p.stack?.slice(0, 3).map((t) => (
                       <span key={t} className="text-[8px] border border-[#c9a84c]/12 text-[#8a8a9a] px-1.5 py-0.5 tracking-wider uppercase">
                         {t}
                       </span>
                     ))}
+                  </div>
+                  <div className="flex items-center justify-between border-t border-[#c9a84c]/10 pt-3">
+                    <Link href={`/builder/${p.userId}`} className="text-[#8a8a9a] hover:text-[#c9a84c] text-[9px] tracking-widest uppercase transition-colors flex items-center gap-1.5 min-w-0" style={{ fontFamily: "var(--font-cinzel)" }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3 flex-shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                      <span className="truncate max-w-[80px]">{p.username || "Builder"}</span>
+                    </Link>
+                    {sessionUserId && p.userId === sessionUserId ? (
+                      <Link href={`/projects/${p._id}`} className="text-[#c9a84c] text-[9px] tracking-[0.15em] uppercase hover:text-[#e8c96a] transition-colors flex-shrink-0" style={{ fontFamily: "var(--font-cinzel)" }}>
+                        Inspect →
+                      </Link>
+                    ) : (
+                      <span className="text-[#8a8a9a]/30 text-[9px] tracking-[0.15em] uppercase cursor-not-allowed flex-shrink-0" title="Only accessible to the project owner">
+                        Restricted
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -272,18 +303,13 @@ export default function CommunityPage() {
         <div className="space-y-5">
           {/* Leaderboard */}
           <div className="border border-[#c9a84c]/12 bg-[#0e1018] p-5">
-            <div className="flex items-center justify-between mb-1">
-              <h3
-                className="text-[#c9a84c] text-lg"
-                style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic" }}
-              >
-                Master<br />Builders
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[#c9a84c]" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic", fontSize: "1.25rem", lineHeight: 1.2 }}>
+                Master Builders
               </h3>
-              <div className="text-right">
-                <p className="text-[#8a8a9a] text-[9px] tracking-wider uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>
-                  Top {leaderboard.length} / Week
-                </p>
-                <p className="text-[#f0ead6] text-xs font-mono">{leaderboard[0]?.streak ?? 0}</p>
+              <div className="text-right flex-shrink-0 ml-2">
+                <p className="text-[#8a8a9a] text-[9px] tracking-wider uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>Top {leaderboard.length}</p>
+                <p className="text-[#f0ead6] text-xs font-mono">{leaderboard[0]?.streak ?? 0} <span className="text-[8px] text-[#8a8a9a]">streak</span></p>
               </div>
             </div>
 
@@ -293,30 +319,30 @@ export default function CommunityPage() {
               ) : (
                 leaderboard.map((u) => (
                   <div key={u.rank} className="flex items-center gap-3">
-                    <span className="text-[#c9a84c]/60 text-lg font-mono w-6">{u.rank}</span>
-                    <div className="w-8 h-8 rounded-full bg-[#1a1c28] border border-[#c9a84c]/20 flex items-center justify-center text-[10px] text-[#8a8a9a]">
+                    <span className="text-[#c9a84c]/60 text-lg font-mono w-6 flex-shrink-0">{u.rank}</span>
+                    <div className="w-8 h-8 rounded-full bg-[#1a1c28] border border-[#c9a84c]/20 flex flex-shrink-0 items-center justify-center text-[10px] text-[#8a8a9a]">
                       {u.name.charAt(0)}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-[#f0ead6] text-xs font-medium">{u.name}</p>
-                        {u.streak > 0 && <span className="text-[#c9a84c] text-[10px] flex items-center gap-0.5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 2.4 5.6a8.3 8.3 0 11-14.3-6.4c1.5 1.5 3 2.5 3 4.5 0 .5.3 1 1.4 1.3z" /></svg>{u.streak}</span>}
-                      </div>
-                      <p className="text-[#8a8a9a] text-[9px] tracking-wider uppercase">
-                        {u.projects} Projects · {u.points} Tasks Done
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/builder/${u.userid}`} className="text-[#f0ead6] text-xs font-medium hover:text-[#c9a84c] transition-colors truncate block">
+                        {u.name}
+                      </Link>
+                      <p className="text-[#8a8a9a] text-[8px] tracking-wider uppercase truncate">
+                        {u.projects} prj · {u.points} pts
                       </p>
                     </div>
+                    {u.streak > 0 && <span className="text-[#c9a84c] flex-shrink-0 text-[10px] flex items-center gap-0.5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 2.4 5.6a8.3 8.3 0 11-14.3-6.4c1.5 1.5 3 2.5 3 4.5 0 .5.3 1 1.4 1.3z" /></svg>{u.streak}</span>}
                   </div>
                 ))
               )}
             </div>
 
             <Link
-              href="#"
-              className="block text-center text-[#c9a84c]/50 text-[9px] tracking-[0.15em] uppercase mt-4 hover:text-[#c9a84c] transition-colors"
+              href="/leaderboard"
+              className="block w-full text-center text-[#c9a84c]/50 text-[9px] tracking-[0.15em] uppercase mt-4 py-2 hover:text-[#c9a84c] hover:bg-[#c9a84c]/5 transition-colors"
               style={{ fontFamily: "var(--font-cinzel)" }}
             >
-              View Full Register
+              View Full Register →
             </Link>
           </div>
 
@@ -340,6 +366,77 @@ export default function CommunityPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Leaderboard Modal ── */}
+      {showLeaderboardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#080810] border border-[#c9a84c]/20 w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-[#c9a84c]/10">
+              <h2 className="text-[#f0ead6] text-xl" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic" }}>
+                The Grand Register
+              </h2>
+              <button 
+                onClick={() => setShowLeaderboardModal(false)}
+                className="text-[#8a8a9a] hover:text-[#c9a84c] transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto flex-1 p-6 space-y-4 custom-scrollbar">
+              <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-6">
+                <div className="col-span-3 grid grid-cols-[w-8_1fr_100px_100px] gap-4 px-2 mb-2 text-[#8a8a9a] text-[9px] tracking-widest uppercase border-b border-[#c9a84c]/10 pb-2" style={{ fontFamily: "var(--font-cinzel)" }}>
+                  <div className="w-8 ml-2">Rnk</div>
+                  <div>Builder</div>
+                  <div className="text-right">Streak</div>
+                  <div className="text-right">Points</div>
+                </div>
+
+                {fullLeaderboard.map((u) => (
+                  <div key={u.rank} className="col-span-3 grid grid-cols-[w-8_1fr_100px_100px] gap-4 items-center group hover:bg-[#c9a84c]/5 p-2 rounded-lg transition-colors">
+                    <div className="text-[#c9a84c]/60 text-lg font-mono w-8 text-center">{u.rank}</div>
+                    
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-[#1a1c28] border border-[#c9a84c]/20 flex flex-shrink-0 items-center justify-center text-[10px] text-[#8a8a9a]">
+                        {u.name.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                         <Link href={`/builder/${u.userid}`} className="text-[#f0ead6] text-sm font-medium hover:text-[#c9a84c] transition-colors truncate block">
+                           {u.name}
+                         </Link>
+                         <p className="text-[#8a8a9a] text-[9px] tracking-wider uppercase truncate mt-0.5">
+                           {u.projects} Projects
+                         </p>
+                      </div>
+                    </div>
+                    
+                    <div className="text-right flex justify-end">
+                      {u.streak > 0 ? (
+                        <div className="inline-flex items-center gap-1 text-[#c9a84c] text-[11px] font-mono px-2 py-0.5 bg-[#c9a84c]/10 rounded-full border border-[#c9a84c]/20">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 2.4 5.6a8.3 8.3 0 11-14.3-6.4c1.5 1.5 3 2.5 3 4.5 0 .5.3 1 1.4 1.3z" /></svg>
+                          {u.streak}
+                        </div>
+                      ) : (
+                        <span className="text-[#8a8a9a] text-xs font-mono">0</span>
+                      )}
+                    </div>
+                    
+                    <div className="text-right text-[#c9a84c] text-sm font-mono font-bold">
+                      {u.points}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-[#c9a84c]/10 text-center">
+               <p className="text-[#8a8a9a] text-[9px] tracking-widest uppercase" style={{ fontFamily: "var(--font-cinzel)" }}>
+                 {fullLeaderboard.length} Master Builders Registered
+               </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -95,16 +95,6 @@ export default function Header() {
           New Project
         </Link>
 
-        {/* Notification bell */}
-        <button className="relative text-[#8a8a9a] hover:text-[#c9a84c] transition-colors p-1">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4.5 h-4.5">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 01-3.46 0" />
-          </svg>
-          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#c9a84c] rounded-full text-[7px] text-[#080810] font-bold flex items-center justify-center">
-            7
-          </span>
-        </button>
 
         {/* Profile / Auth Section */}
         {sessionStatus === "loading" ? (
@@ -158,7 +148,7 @@ export default function Header() {
                 {/* Links */}
                 <div className="py-1">
                   <Link
-                    href="/dashboard"
+                    href={`/builder/${sessionUser.id}`}
                     onClick={() => setProfileOpen(false)}
                     className="flex items-center gap-3 px-4 py-2.5 text-[#8a8a9a] text-xs hover:text-[#f0ead6] hover:bg-white/[0.02] transition-all"
                   >

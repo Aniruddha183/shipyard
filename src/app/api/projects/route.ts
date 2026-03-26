@@ -24,10 +24,23 @@ export async function GET(req: NextRequest) {
     name: { name: 1 },
   };
 
-  const projects = await Project.find(filter)
-    .sort(sortMap[sort] || { updatedAt: -1 });
+  const query = Project.find(filter);
+  
+  // We populate userId with username to display creator names
+  query.populate("userId", "username");
 
-  return NextResponse.json(projects.map(p => p.toJSON()));
+  const projects = await query.sort(sortMap[sort] || { updatedAt: -1 });
+
+  const result = projects.map(p => {
+    const doc = p.toJSON();
+    if (doc.userId && typeof doc.userId === "object" && "username" in doc.userId) {
+      doc.username = (doc.userId as any).username;
+      doc.userId = (doc.userId as any)._id.toString();
+    }
+    return doc;
+  });
+
+  return NextResponse.json(result);
 }
 
 // POST /api/projects — create project

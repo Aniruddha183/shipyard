@@ -27,6 +27,18 @@ function priorityMeta(p: string) {
   return PRIORITY_OPTIONS.find(o => o.value === p) || PRIORITY_OPTIONS[1];
 }
 
+function statusBadge(s: string) {
+  switch (s) {
+    case "active":    return "bg-[#1a4a35] text-[#5ae0a0]";
+    case "shipped":   return "bg-[#1a4a35] text-[#5ae0a0]";
+    case "paused":    return "bg-[#4a1a1a] text-[#e05a5a]";
+    case "planning":  return "bg-[#3a3520] text-[#c9a84c]";
+    case "reviewing": return "bg-[#3a3520] text-[#c9a84c]";
+    case "abandoned": return "bg-[#6b1a2a]/20 text-[#e05a5a]";
+    default:          return "bg-[#1a1c28] text-[#8a8a9a]";
+  }
+}
+
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -182,7 +194,7 @@ export default function ProjectDetailPage() {
             <p className="text-[#8a8a9a] text-[9px] font-mono">{t._id.slice(-6).toUpperCase()}</p>
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {!isDone && (
+            {!isDone && project.status !== "abandoned" && (
               <>
                 {t.status !== "inprogress" && (
                   <button onClick={() => setTaskInProgress(t._id)} className="text-[#c9a84c]/50 hover:text-[#c9a84c] transition-colors p-0.5" title="In Progress">
@@ -197,7 +209,7 @@ export default function ProjectDetailPage() {
                 </button>
               </>
             )}
-            {isDone && (
+            {isDone && project.status !== "abandoned" && (
               <button onClick={() => toggleTask(t._id, t.status)} className="text-[#c9a84c]/50 hover:text-[#c9a84c] transition-colors p-0.5" title="Move back to Todo">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5"><path d="M3 12h18M3 12l6-6M3 12l6 6" /></svg>
               </button>
@@ -268,8 +280,8 @@ export default function ProjectDetailPage() {
               ← Projects
             </Link>
             <span className="text-[#c9a84c]/20">|</span>
-            <span className="text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 bg-[#1a4a35] text-[#5ae0a0] font-bold" style={{ fontFamily: "var(--font-cinzel)" }}>
-              {project.status}
+            <span className={`text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 font-bold ${statusBadge(project.status)}`} style={{ fontFamily: "var(--font-cinzel)" }}>
+              {project.status === "abandoned" ? "retired" : project.status}
             </span>
             <span className="text-[#8a8a9a] text-xs font-mono">ID: {project._id.slice(-8).toUpperCase()}</span>
           </div>
@@ -288,15 +300,17 @@ export default function ProjectDetailPage() {
                 📅 {new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
               </span>
             )}
-            <Link href={`/projects/${projectId}/edit`}
-              className="text-[#c9a84c] text-[10px] tracking-[0.12em] uppercase hover:text-[#e8c96a] transition-colors ml-2 flex items-center gap-1"
-              style={{ fontFamily: "var(--font-cinzel)" }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Edit Project
-            </Link>
+            {project.status !== "abandoned" && (
+              <Link href={`/projects/${projectId}/edit`}
+                className="text-[#c9a84c] text-[10px] tracking-[0.12em] uppercase hover:text-[#e8c96a] transition-colors ml-2 flex items-center gap-1"
+                style={{ fontFamily: "var(--font-cinzel)" }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Edit Project
+              </Link>
+            )}
           </div>
         </div>
 
@@ -380,13 +394,13 @@ export default function ProjectDetailPage() {
                 </button>
               </div>
             </div>
-          ) : (
+          ) : project.status !== "abandoned" ? (
             <button onClick={() => setAddingTask(true)}
               className="w-full mt-3 border border-dashed border-[#c9a84c]/20 text-[#c9a84c]/50 text-[10px] tracking-[0.15em] uppercase py-3 hover:border-[#c9a84c]/40 hover:text-[#c9a84c] transition-all"
               style={{ fontFamily: "var(--font-cinzel)" }}>
               ⊕ Carve New Task
             </button>
-          )}
+          ) : null}
         </div>
 
         {/* DONE Column */}
@@ -434,28 +448,30 @@ export default function ProjectDetailPage() {
           </div>
 
           {/* Quick Status Change */}
-          <div className="border border-[#c9a84c]/12 bg-[#0e1018] p-5">
-            <h4 className="text-[#8a8a9a] text-[9px] tracking-[0.15em] uppercase mb-3" style={{ fontFamily: "var(--font-cinzel)" }}>Change Status</h4>
-            <div className="flex flex-col gap-2">
-              {(["active", "paused", "planning", "reviewing", "shipped"] as const).map(s => (
-                <button key={s}
-                  onClick={async () => {
-                    await fetch(`/api/projects/${projectId}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ status: s }),
-                    });
-                    loadProject();
-                  }}
-                  className={`text-left text-[10px] tracking-[0.12em] uppercase px-3 py-2 border transition-all ${project.status === s
-                    ? "border-[#c9a84c] text-[#c9a84c] bg-[#c9a84c]/8"
-                    : "border-[#c9a84c]/10 text-[#8a8a9a] hover:border-[#c9a84c]/30 hover:text-[#f0ead6]"
-                  }`} style={{ fontFamily: "var(--font-cinzel)" }}>
-                  {project.status === s ? "✓ " : ""}{s}
-                </button>
-              ))}
+          {project.status !== "abandoned" && (
+            <div className="border border-[#c9a84c]/12 bg-[#0e1018] p-5">
+              <h4 className="text-[#8a8a9a] text-[9px] tracking-[0.15em] uppercase mb-3" style={{ fontFamily: "var(--font-cinzel)" }}>Change Status</h4>
+              <div className="flex flex-col gap-2">
+                {(["active", "paused", "planning", "reviewing", "shipped"] as const).map(s => (
+                  <button key={s}
+                    onClick={async () => {
+                      await fetch(`/api/projects/${projectId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: s }),
+                      });
+                      loadProject();
+                    }}
+                    className={`text-left text-[10px] tracking-[0.12em] uppercase px-3 py-2 border transition-all ${project.status === s
+                      ? "border-[#c9a84c] text-[#c9a84c] bg-[#c9a84c]/8"
+                      : "border-[#c9a84c]/10 text-[#8a8a9a] hover:border-[#c9a84c]/30 hover:text-[#f0ead6]"
+                    }`} style={{ fontFamily: "var(--font-cinzel)" }}>
+                    {project.status === s ? "✓ " : ""}{s}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Task breakdown by priority */}
           <div className="border border-[#c9a84c]/12 bg-[#0e1018] p-5">
@@ -484,17 +500,19 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* ── Danger Zone ── */}
-      <div className="border border-[#6b1a2a]/40 bg-[#6b1a2a]/8 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h3 className="text-[#e05a5a] text-xl mb-1" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic" }}>Finality &amp; Dissolution</h3>
-          <p className="text-[#8a8a9a] text-sm">Retiring a project sends it to the Graveyard. The record remains, but the project is archived.</p>
+      {project.status !== "abandoned" && (
+        <div className="border border-[#6b1a2a]/40 bg-[#6b1a2a]/8 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h3 className="text-[#e05a5a] text-xl mb-1" style={{ fontFamily: "var(--font-cormorant)", fontStyle: "italic" }}>Finality &amp; Dissolution</h3>
+            <p className="text-[#8a8a9a] text-sm">Retiring a project sends it to the Graveyard. The record remains, but the project is archived.</p>
+          </div>
+          <button onClick={() => setShowAbandon(true)}
+            className="bg-[#6b1a2a] text-[#f0ead6] text-[10px] tracking-[0.18em] uppercase font-bold px-6 py-3 hover:bg-[#8a2236] transition-all flex-shrink-0"
+            style={{ fontFamily: "var(--font-cinzel)" }}>
+            Abandon Build
+          </button>
         </div>
-        <button onClick={() => setShowAbandon(true)}
-          className="bg-[#6b1a2a] text-[#f0ead6] text-[10px] tracking-[0.18em] uppercase font-bold px-6 py-3 hover:bg-[#8a2236] transition-all flex-shrink-0"
-          style={{ fontFamily: "var(--font-cinzel)" }}>
-          Abandon Build
-        </button>
-      </div>
+      )}
 
       {/* ── Abandon Modal ── */}
       {showAbandon && (

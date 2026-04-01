@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import DatePicker from "react-datepicker";
@@ -25,15 +25,34 @@ export default function EditProjectPage() {
   const params = useParams();
   const projectId = params.id as string;
 
-  // Mock initial data — in production, fetch from API
-  const [name, setName] = useState("The Obsidian Nexus");
-  const [description, setDescription] = useState("Redefining edge-computing latency through artisanal packet-routing.");
-  const [selectedStacks, setSelectedStacks] = useState<string[]>(["Rust", "WebAssembly"]);
-  const [deadline, setDeadline] = useState("2024-10-14");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedStacks, setSelectedStacks] = useState<string[]>([]);
+  const [deadline, setDeadline] = useState("");
   const [visibility, setVisibility] = useState("public");
   const [status, setStatus] = useState("active");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const loadProject = useCallback(() => {
+    fetch(`/api/projects/${projectId}`)
+      .then(r => r.json())
+      .then(data => {
+        setName(data.name || "");
+        setDescription(data.description || "");
+        setSelectedStacks(data.stack || []);
+        if (data.deadline) {
+          setDeadline(typeof data.deadline === "string" ? data.deadline.split("T")[0] : data.deadline);
+        }
+        setVisibility(data.visibility || "public");
+        setStatus(data.status || "active");
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [projectId]);
+
+  useEffect(() => { loadProject(); }, [loadProject]);
 
   const toggleStack = (stack: string) => {
     setSelectedStacks((prev) =>
@@ -67,6 +86,13 @@ export default function EditProjectPage() {
       setSaving(false);
     }
   };
+
+  if (loading) return (
+    <div className="max-w-[800px] mx-auto space-y-8 animate-pulse">
+      <div className="h-8 bg-[#0e1018] border border-[#c9a84c]/8 w-1/3" />
+      <div className="h-4 bg-[#0e1018] border border-[#c9a84c]/8 w-1/2" />
+    </div>
+  );
 
   return (
     <div className="max-w-[800px] mx-auto">
